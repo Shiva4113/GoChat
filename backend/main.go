@@ -54,15 +54,21 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
+
+var clients = make(map[*websocket.Conn]bool)
+var clientsMutex sync.Mutex
 
 func main() {
 	http.HandleFunc("/ws", handleConnections)
@@ -81,6 +87,17 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
+	clientsMutex.Lock()
+	clients[ws] = true
+	clientsMutex.Unlock()
+
+	//handling client diconenction :-
+	defer func() {
+		clientsMutex.Lock()
+		delete(clients, ws)
+		clientsMutex.Unlock()
+	}()
+
 	for {
 		_, msg, err := ws.ReadMessage()
 		if err != nil {
@@ -89,10 +106,23 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("recv: %s", msg)
 
-		err = ws.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			log.Printf("error: %v", err)
-			break
+		// err = ws.WriteMessage(websocket.TextMessage, msg)
+		// if err != nil {
+		// 	log.Printf("error: %v", err)
+		// 	break
+		// }
+
+		clientsMutex.Lock()
+		for client := range clients {
+			if client != ws {
+				err := ws.WriteMessage(websocket.TextMessage, msg)
+				if err != nil {
+					log.Printf("error %v:", err)
+					client.Close()
+					delete(clients, client)
+				}
+			}
 		}
+		clientsMutex.Unlock()
 	}
 }
