@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { ModeToggle } from "./modeToggle";
 import { Button } from "./ui/button";
+import { SquarePlus } from "lucide-react";
 
 export default function Navbar() {
   const [state, setState] = React.useState(false);
@@ -32,12 +33,12 @@ export default function Navbar() {
         >
           <ul className="justify-end items-center space-y-8 md:flex md:space-x-6 md:space-y-0">
             <li>
-              {/* {status !== "authenticated" && ( */}
               <Link href="/login">
-                <Button>Log In</Button>
+                <Button>
+                  <SquarePlus className="mr-2" />
+                  <span>New Chat</span>
+                </Button>
               </Link>
-              {/* )} */}
-              {/* {status === "authenticated" && <UserAvatar />} */}
             </li>
             <ModeToggle />
           </ul>
