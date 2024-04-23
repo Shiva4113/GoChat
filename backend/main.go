@@ -1,56 +1,3 @@
-// package main
-
-// import (
-// 	"fmt"
-// 	"log"
-// 	"net/http"
-// 	"github.com/gorilla/websocket"
-// )
-
-// var upgrader = websocket.Upgrader{
-// 	ReadBufferSize:  1024,
-// 	WriteBufferSize: 1024,
-// 	CheckOrigin: func(r *http.Request) bool { return true },
-// }
-
-// func reader(conn *websocket.Conn) {
-// 	for {
-// 		messageType, p, err := conn.ReadMessage()
-// 		if err != nil {
-// 			log.Println(err)
-// 			return
-// 		}
-// 		fmt.Println(string(p))
-
-// 		if err := conn.WriteMessage(messageType, p); err != nil {
-// 			log.Println(err)
-// 			return
-// 		}
-// 	}
-// }
-
-// func serveWs(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Println(r.Host)
-// 	ws, err := upgrader.Upgrade(w, r, nil)
-// 	if err != nil {
-// 		log.Println(err)
-// 	}
-// 	reader(ws)
-// }
-
-// func setupRoutes() {
-// 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-// 		fmt.Fprintf(w, "Simple Server")
-// 	})
-// 	http.HandleFunc("/ws", serveWs)
-// }
-
-// func main() {
-// 	fmt.Println("Chat App v0.01")
-// 	setupRoutes()
-// 	http.ListenAndServe(":8080", nil)
-// }
-
 package main
 
 import (
@@ -91,31 +38,36 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	clients[ws] = true
 	clientsMutex.Unlock()
 
-	//handling client diconenction :-
+	// to hadnle the cleint disocnn
 	defer func() {
 		clientsMutex.Lock()
 		delete(clients, ws)
 		clientsMutex.Unlock()
+		log.Printf("Client %s disconnected", ws.RemoteAddr())
 	}()
 
 	for {
 		_, msg, err := ws.ReadMessage()
 		if err != nil {
-			log.Printf("error: %v", err)
+			// An error occurred, likely because the client disconnected
+			log.Printf("Client %s disconnected: %v", ws.RemoteAddr(), err)
 			break
 		}
 		log.Printf("recv: %s", msg)
 
-		// err = ws.WriteMessage(websocket.TextMessage, msg)
-		// if err != nil {
-		// 	log.Printf("error: %v", err)
-		// 	break
-		// }
+		// Print the list of clients
+		clientsMutex.Lock()
+		log.Println("Current clients:")
+		for client := range clients {
+			log.Printf("Client address: %s", client.RemoteAddr())
+		}
+		clientsMutex.Unlock()
 
+		// send message to all de peeps in teh thing
 		clientsMutex.Lock()
 		for client := range clients {
 			if client != ws {
-				err := ws.WriteMessage(websocket.TextMessage, msg)
+				err := client.WriteMessage(websocket.TextMessage, msg)
 				if err != nil {
 					log.Printf("error %v:", err)
 					client.Close()
@@ -124,5 +76,11 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		clientsMutex.Unlock()
+
+		//send mesg back to le sender
+		err = ws.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			log.Printf("error sending message to sender: %v", err)
+		}
 	}
 }
