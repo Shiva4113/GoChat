@@ -47,7 +47,7 @@ export default function InputForm() {
   return (
     <>
       <Navbar />
-      <div className="flex justify-center items-center h-[calc(100vh-75px)] bg-black">
+      <div className="flex justify-center items-center h-[calc(100vh-75px)] dark:bg-black bg-gray-50">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -60,7 +60,7 @@ export default function InputForm() {
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="shadcn" {...field} />
+                    <Input placeholder="Your Name" {...field} />
                   </FormControl>
                   <FormDescription>
                     This is your public display name.

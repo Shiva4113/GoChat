@@ -47,17 +47,26 @@ export default function Chat() {
     return () => {
       ws.close();
     };
-
   }, []);
 
   const renderMessages = () => {
+    console.log(messages, username);
     return messages.map((message: message, index: number) => (
       <div
         key={index}
-        className={`max-w-[70%] space-y-1.5 ${
-          message.sender === username ? "justify-end" : ""
+        className={`w-[70%] lg:w-[40%] space-y-1.5 ${
+          message.sender === username
+            ? "justify-self-end text-right"
+            : "justify-self-start"
         }`}
       >
+        <p
+          className={`mx-2 text-sm ${
+            message.sender === username ? "hidden" : ""
+          }`}
+        >
+          {message.sender}
+        </p>
         <div
           className={`rounded-lg ${
             message.sender === username
