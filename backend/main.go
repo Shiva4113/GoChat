@@ -19,7 +19,7 @@ var clientsMutex sync.Mutex
 func main() {
 	http.HandleFunc("/ws", handleConnections)
 
-	log.Println("http server started on :8080")
+	log.Println("HTTP server started on :8080")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
